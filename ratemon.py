@@ -223,6 +223,10 @@ class ratemon():
             station['tout'] = 0
             station['tmax'] = 0
             station['slept'] = 0
+            station['data_size_received'] = 0
+            station['data_size_average'] = 0
+            station['frames_pr_second'] = 0
+            station['second'] = now
 
         # Detect if a station is going to sleep
         old_ps = station.get('ps', 0)
@@ -246,6 +250,23 @@ class ratemon():
 
         # Increment packet frame count
         station['frames'] += 1
+        station['frames_pr_second'] += 1
+
+        # update total data received
+        # Based on: http://stackoverflow.com/a/3742428/936269
+        station['data_size_received'] += header.getlen()
+
+        # If a second has passed calculated average
+        if (now - station['second']) >= 1:
+            data_size = station['data_size_received']
+            frames_pr_second = station['frames_pr_second']
+
+            station['data_size_average'] = data_size / frames_pr_second
+
+            # reset
+            station['second'] = now
+            station['data_size_received'] = 0
+            station['frames_pr_second'] = 0
 
         # Try to set IP if empty
         if station['ip'] == '':
