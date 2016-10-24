@@ -98,6 +98,11 @@ and a few python packages, let's make a virtual env::
     source wpsmon/bin/activate
     pip install -r ./requirements.txt
 
+ If you use version 6+ of libncursesw you will need to make a soft link from
+ version N to  version 5. Example for libncursesw:
+
+ `ln -s /usr/lib/libncursesw.so.6  /usr/lib/libncursesw.so.5`
+
 Run
 ---
 
