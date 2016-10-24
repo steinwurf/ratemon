@@ -1,3 +1,9 @@
+'''
+ Copyright (c) Steinwurf ApS 2016.
+ All Rights Reserved
+
+ Distributed under the "BSD License". See the accompanying LICENSE.rst file.
+'''
 class ratemon():
     """Monitor object."""
 
@@ -80,16 +86,16 @@ class ratemon():
 
         top = '[{0}][frames: {1}][nodes: {2}][date: {3}]\n\n'
         self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
-        header = ' {mac:18s} {ps:3s} {frames:7s} {slept:5s} ' \
-                 '{tout:>7s} {tmax:>7s}  {alias}\n\n'
+        header = ' {mac:18s} {ps:3s} {frames:7s} {slept:5s} {average:4.3f}' \
+                 '{alias}\n\n'
         self.screen.addstr(header.format(**
                            {'mac': 'mac',
                             'ps': 'ps',
                             'frames': 'frames',
                             'slept': 'slept',
-                            'tout': 'tout',
-                            'tmax': 'tmax',
-                            'alias': 'alias/ip'}))
+                            'average': 'average',
+                            'alias': 'alias/ip'
+                           }))
 
         # Sort stations according to creation time
         sorted_stations = sorted(
@@ -113,8 +119,8 @@ class ratemon():
             if self.only_alias and not station['alias']:
                 continue
 
-            fmt = ' {mac:18s} {ps:<3d} {frames:<7d} {slept:<5d}'\
-                  '{tout:>7.1f} {tmax:>7.1f} {alias} {ip}\n'
+            fmt = ' {mac:18s} {ps:<3d} {frames:<7d} {slept:<5d} {average:4.3f}'\
+                  '{alias} {ip}\n'
             text = fmt.format(**station)
             if station['stale']:
                 color = curses.color_pair(3) | curses.A_BOLD
@@ -140,8 +146,6 @@ class ratemon():
         for station in self.stations.values():
             station['frames'] = 0
             station['slept'] = 0
-            station['tout'] = 0
-            station['tmax'] = 0
 
     def reset_nodes(self):
         """Reset nodes."""
@@ -180,8 +184,6 @@ class ratemon():
             station['ip'] = ''
             station['created'] = now
             station['frames'] = 0
-            station['tout'] = 0
-            station['tmax'] = 0
             station['slept'] = 0
             station['data_size_received'] = 0
             station['data_size_average'] = 0
@@ -196,14 +198,6 @@ class ratemon():
         # Count number of sleeps
         if going_to_ps:
             station['slept'] += 1
-
-        # Calculate timeout if going to PS
-        if 'last' in station and going_to_ps:
-            diff_ms = (now - station['last']) * 1000
-            station['tout'] = diff_ms
-
-            if diff_ms > station['tmax']:
-                station['tmax'] = diff_ms
 
         # Log last updated time
         station['last'] = now
@@ -221,7 +215,8 @@ class ratemon():
             data_size = station['data_size_received']
             frames_pr_second = station['frames_pr_second']
 
-            station['data_size_average'] = data_size / frames_pr_second
+            ## Calculate data average in kilo bytes
+            station['data_size_average'] = (data_size / frames_pr_second) / 1000
 
             # reset
             station['second'] = now

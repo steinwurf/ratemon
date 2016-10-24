@@ -1,5 +1,28 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
+import sys
+import os
+import time
+import datetime
+import argparse
+import socket
+import re
+import curses
+import subprocess
+import dpkt
+import pcapy
+
+import ratemon
+
+"""
+ Copyright (c) Steinwurf ApS 2016.
+ All Rights Reserved
+
+ Distributed under the "BSD License". See the accompanying LICENSE.rst file.
+"""
+
 """
 Dump 802.11 power-save status
 
@@ -17,23 +40,6 @@ Alternative setup:
 
   run wpsmon.py with <wlan device> as interface
 """
-
-from __future__ import print_function
-
-import sys
-import os
-import time
-import datetime
-import argparse
-import socket
-import re
-import curses
-import subprocess
-import dpkt
-import pcapy
-
-import ratemon
-
 
 def mac_string(mac):
     """Convert mac to string."""
