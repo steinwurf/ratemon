@@ -1,10 +1,47 @@
 #!/usr/bin/env python
 """
- Copyright (c) Steinwurf ApS 2016.
- All Rights Reserved
+Copyright (c) Steinwurf ApS 2016.
+All Rights Reserved
 
- Distributed under the "BSD License". See the accompanying LICENSE.rst file.
+Distributed under the "BSD License". See the accompanying LICENSE.rst file.
+
+Dump 802.11 power-save status
+
+Add a monitor interface and specify channel before use:
+  iw phy <phy> interface add mon0 type monitor
+  iw mon0 set channel <channel> HT20
+
+Replace <phy> and <channel> with the correct values.
+
+Alternative setup:
+  ifconfig <wlan device> down
+  iwconfig <wlan device> mode monitor
+  ifconfig <wlan device> up
+  iw <wlan device> set channel <channel> HT20
+
+  run ratemon.py with <wlan device> as interface
 """
+
+from __future__ import print_function
+
+import sys
+import os
+import time
+import datetime
+import argparse
+import socket
+import re
+import curses
+import subprocess
+import dpkt
+import pcapy
+
+
+def mac_string(mac):
+    """Convert mac to string."""
+    return ':'.join('{0:02X}'.format(ord(b)) for b in mac)
+
+
 class ratemon():
     """Monitor object."""
 
@@ -87,16 +124,15 @@ class ratemon():
 
         top = '[{0}][frames: {1}][nodes: {2}][date: {3}]\n\n'
         self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
-        header = ' {mac:18s} {ps:3s} {frames:7s} {slept:5s} {average:4.3f}' \
-                 '{alias}\n\n'
+        header = ' {mac:18s} {ps:3s} {frames:7s} {slept:5s}' \
+                 '{average:4.3f} {alias}\n\n'
         self.screen.addstr(header.format(**
                            {'mac': 'mac',
                             'ps': 'ps',
                             'frames': 'frames',
                             'slept': 'slept',
                             'average': 'average',
-                            'alias': 'alias/ip'
-                           }))
+                            'alias': 'alias/ip'}))
 
         # Sort stations according to creation time
         sorted_stations = sorted(
@@ -120,8 +156,8 @@ class ratemon():
             if self.only_alias and not station['alias']:
                 continue
 
-            fmt = ' {mac:18s} {ps:<3d} {frames:<7d} {slept:<5d} {average:4.3f}'\
-                  '{alias} {ip}\n'
+            fmt = ' {mac:18s} {ps:<3d} {frames:<7d} {slept:<5d}'\
+                  '{tout:>7.1f} {tmax:>7.1f} {alias} {ip}\n'
             text = fmt.format(**station)
             if station['stale']:
                 color = curses.color_pair(3) | curses.A_BOLD
@@ -147,6 +183,8 @@ class ratemon():
         for station in self.stations.values():
             station['frames'] = 0
             station['slept'] = 0
+            station['tout'] = 0
+            station['tmax'] = 0
 
     def reset_nodes(self):
         """Reset nodes."""
@@ -186,10 +224,10 @@ class ratemon():
             station['created'] = now
             station['frames'] = 0
             station['slept'] = 0
-            station['data_size_received'] = 0
-            station['data_size_average'] = 0
-            station['frames_pr_second'] = 0
-            station['second'] = now
+            station['received'] = 0
+            station['average'] = 0
+            station['fps'] = 0
+            station['start'] = now
 
         # Detect if a station is going to sleep
         old_ps = station.get('ps', 0)
@@ -200,29 +238,36 @@ class ratemon():
         if going_to_ps:
             station['slept'] += 1
 
+        # Calculate timeout if going to PS
+        if 'last' in station and going_to_ps:
+            diff_ms = (now - station['last']) * 1000
+            station['tout'] = diff_ms
+
+            if diff_ms > station['tmax']:
+                station['tmax'] = diff_ms
+
         # Log last updated time
         station['last'] = now
 
         # Increment packet frame count
         station['frames'] += 1
-        station['frames_pr_second'] += 1
+        station['fps'] += 1
 
-        # update total data received
-        # Based on: http://stackoverflow.com/a/3742428/936269
-        station['data_size_received'] += header.getlen()
+        # Registre amount of data received
+        station['received'] += header.getlen()
 
-        # If a second has passed calculated average
-        if (now - station['second']) >= 1:
-            data_size = station['data_size_received']
-            frames_pr_second = station['frames_pr_second']
+        if (now - station['start'] == 0):
+            received = station['received']
+            fps = station['fps']
 
-            ## Calculate data average in kilo bytes
-            station['data_size_average'] = (data_size / frames_pr_second) / 1000
+            ## Calculated average in Kb
+            calulated average = (received / fps) / 1000
 
-            # reset
-            station['second'] = now
-            station['data_size_received'] = 0
-            station['frames_pr_second'] = 0
+            ## Reset data counters
+            station['start'] = now
+            station['received'] = 0
+            station['fps'] = 0
+
 
         # Try to set IP if empty
         if station['ip'] == '':
@@ -232,3 +277,127 @@ class ratemon():
 
         # Station is not stale
         station['stale'] = False
+
+
+def parse_alias_pair(alias):
+    """Parse alias mac, name pair."""
+    match = re.match('(..:..:..:..:..:..)=(.*)', alias, flags=re.IGNORECASE)
+    if not match:
+        raise RuntimeError('Failed to parse alias: ' + alias)
+    return match.group(1), match.group(2)
+
+
+def alias_type(alias):
+    """parse alias argument."""
+    try:
+        host, name = parse_alias_pair(alias)
+    except Exception as e:
+        raise argparse.ArgumentTypeError(e)
+    return (host, name)
+
+
+def main():
+    """Main function."""
+    formatter = argparse.RawTextHelpFormatter
+
+    parser = argparse.ArgumentParser(description=__doc__,
+                                     formatter_class=formatter)
+
+    parser.add_argument('interface', help='interface to sniff')
+    parser.add_argument('-a', '--alias', metavar='<mac=name>',
+                        action='append', type=alias_type,
+                        help='alias mac with name')
+    parser.add_argument('-f', '--alias-file', metavar='<file>',
+                        help='read aliases from file',
+                        default='steinwurf_alias.txt')
+    parser.add_argument('-A', '--only-alias', action='store_true',
+                        help='only show aliased nodes')
+    parser.add_argument('-s', '--stale-time',
+                        type=int, default=30, metavar='<sec>',
+                        help='consider node stale after SEC seconds')
+    parser.add_argument('-d', '--dead-time',
+                        type=int, default=60, metavar='<sec>',
+                        help='consider node dead after SEC seconds')
+
+    args = parser.parse_args()
+
+    # Create monitor object
+    try:
+        mon = ratemon(args.interface)
+    except Exception as e:
+        print("Failed to open capture: " + str(e))
+        sys.exit(os.EX_NOPERM)
+
+    # Setup timeouts
+    mon.set_stale_time(args.stale_time)
+    mon.set_dead_time(args.dead_time)
+
+    # Map aliases from command line
+    if args.alias is not None:
+        for a in args.alias:
+            host, name = a
+            mon.add_alias(host, name)
+
+    # Map aliases from file
+    if args.alias_file is not None:
+        with open(args.alias_file) as f:
+            for line in f:
+                # Skip comments and empty lines
+                if re.match('^\s*(#.*)?$', line):
+                    continue
+                host, name = parse_alias_pair(line)
+                mon.add_alias(host, name)
+
+    mon.set_only_alias(args.only_alias)
+
+    # Setup curses
+    stdscr = curses.initscr()
+    curses.noecho()
+    curses.cbreak()
+    curses.curs_set(0)
+    stdscr.nodelay(1)
+
+    # Setup colors
+    curses.start_color()
+    curses.use_default_colors()
+    curses.init_pair(1, curses.COLOR_RED, -1)
+    curses.init_pair(2, curses.COLOR_GREEN, -1)
+    curses.init_pair(3, curses.COLOR_BLACK, -1)
+
+    # Setup screen
+    mon.set_screen(stdscr)
+
+    last_update = 0
+    while True:
+        now = time.time()
+        if now > last_update + 0.1:
+            try:
+                mon.update_screen()
+            except:
+                pass
+            last_update = now
+        try:
+            mon.next()
+        except KeyboardInterrupt:
+            break
+        except:
+            pass
+
+        ch = stdscr.getch()
+        if ch == ord('q'):
+            break
+        if ch == ord('r'):
+            mon.reset_counters()
+        if ch == ord('R'):
+            mon.reset_counters()
+            mon.reset_nodes()
+
+    # Cleanup curses
+    curses.nocbreak()
+    curses.echo()
+    curses.curs_set(1)
+    curses.endwin()
+
+
+if __name__ == '__main__':
+    main()
