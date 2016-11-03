@@ -124,14 +124,14 @@ class ratemon():
 
         top = '[{0}][frames: {1}][nodes: {2}][date: {3}]\n\n'
         self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
-        header = ' {mac:18s} {ps:3s} {frames:7s} {slept:5s}' \
-                 '{average:4.3f} {alias}\n\n'
+
+        header = ' {mac:18s} {ps:3s} {frames:7s} ' \
+                 '{average:4s} {alias}\n\n'
         self.screen.addstr(header.format(**
                            {'mac': 'mac',
                             'ps': 'ps',
                             'frames': 'frames',
-                            'slept': 'slept',
-                            'average': 'average',
+                            'average': 'avg',
                             'alias': 'alias/ip'}))
 
         # Sort stations according to creation time
@@ -156,8 +156,10 @@ class ratemon():
             if self.only_alias and not station['alias']:
                 continue
 
-            fmt = ' {mac:18s} {ps:<3d} {frames:<7d} {slept:<5d}'\
-                  '{tout:>7.1f} {tmax:>7.1f} {alias} {ip}\n'
+           
+            fmt = ' {mac:18s} {ps:<3d} {frames:<7d} '\
+                  '{avg:>4.3f} {alias}\n'
+
             text = fmt.format(**station)
             if station['stale']:
                 color = curses.color_pair(3) | curses.A_BOLD
@@ -166,7 +168,6 @@ class ratemon():
             else:
                 color = curses.color_pair(2)
             self.screen.addstr(text, color)
-
         # Show help text
         footer = "q: quit | r: reset counters | R: reset nodes"
         self.screen.addstr(maxy - 1, 1, footer)
@@ -182,9 +183,8 @@ class ratemon():
         self.captured = 0
         for station in self.stations.values():
             station['frames'] = 0
-            station['slept'] = 0
-            station['tout'] = 0
-            station['tmax'] = 0
+            station['average'] = 0
+            station['received'] = 0
 
     def reset_nodes(self):
         """Reset nodes."""
@@ -223,7 +223,6 @@ class ratemon():
             station['ip'] = ''
             station['created'] = now
             station['frames'] = 0
-            station['slept'] = 0
             station['received'] = 0
             station['average'] = 0
             station['fps'] = 0
@@ -232,19 +231,6 @@ class ratemon():
         # Detect if a station is going to sleep
         old_ps = station.get('ps', 0)
         station['ps'] = ps
-        going_to_ps = ps and not old_ps
-
-        # Count number of sleeps
-        if going_to_ps:
-            station['slept'] += 1
-
-        # Calculate timeout if going to PS
-        if 'last' in station and going_to_ps:
-            diff_ms = (now - station['last']) * 1000
-            station['tout'] = diff_ms
-
-            if diff_ms > station['tmax']:
-                station['tmax'] = diff_ms
 
         # Log last updated time
         station['last'] = now
@@ -256,10 +242,9 @@ class ratemon():
         # Registre amount of data received
         station['received'] += header.getlen()
 
-        if (now - station['start'] == 0):
+        if (now - station['start'] >= 1):
             received = station['received']
             fps = station['fps']
-            print('javol')
             ## Calculated average in Kb
             station['average'] = (received / fps) / 1000
 
