@@ -259,7 +259,7 @@ class ratemon():
         if (now - station['start'] == 0):
             received = station['received']
             fps = station['fps']
-
+            print('javol')
             ## Calculated average in Kb
             station['average'] = (received / fps) / 1000
 
