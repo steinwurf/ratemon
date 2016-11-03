@@ -261,7 +261,7 @@ class ratemon():
             fps = station['fps']
 
             ## Calculated average in Kb
-            calulated average = (received / fps) / 1000
+            station['average'] = (received / fps) / 1000
 
             ## Reset data counters
             station['start'] = now
