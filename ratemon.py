@@ -248,7 +248,7 @@ class ratemon():
         for station in self.stations.values():
             station['frames'] = 0
             station['average'] = 0.0
-            station['received'] = 0
+            station['received'] = 0.0
 
     def reset_nodes(self):
         """Reset nodes."""
@@ -287,7 +287,7 @@ class ratemon():
             station['ip'] = ''
             station['created'] = now
             station['frames'] = 0
-            station['received'] = 0
+            station['received'] = 0.0
             station['average'] = 0.0
             station['fps'] = 0
             station['start'] = now
@@ -310,7 +310,7 @@ class ratemon():
             received = station['received']
             fps = station['fps']
             ## Calculated average in Kb
-            station['average'] = (received / fps) #/ 1000
+            station['average'] = (received / fps) / 1000
 
             ## Reset data counters
             station['start'] = now
