@@ -247,7 +247,7 @@ class ratemon():
         self.captured = 0
         for station in self.stations.values():
             station['frames'] = 0
-            station['average'] = 0
+            station['average'] = 0.0
             station['received'] = 0
 
     def reset_nodes(self):
