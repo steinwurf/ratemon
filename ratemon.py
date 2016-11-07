@@ -310,12 +310,13 @@ class ratemon():
             received = station['received']
             fps = station['fps']
             ## Calculated average in Kb
-            station['average'] = (received / fps) / 1000.0
-
+            #station['average'] = (received / fps) / 1000.0
+            station['average'] = received / 1000.0
             ## Reset data counters
             station['start'] = now
             station['received'] = 0.0
-            station['fps'] = 0.0
+            station['fps'] = 0
+
 
 
         # Try to set IP if empty
