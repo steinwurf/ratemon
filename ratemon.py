@@ -191,12 +191,12 @@ class ratemon():
     #     self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
 
     #     header = ' {mac:18s} {ps:3s} {frames:7s} ' \
-    #              '{average:4s} {alias}\n\n'
+    #              '{kbs:4s} {alias}\n\n'
     #     self.screen.addstr(header.format(**
     #                        {'mac': 'mac',
     #                         'ps': 'ps',
     #                         'frames': 'frames',
-    #                         'average': 'avg',
+    #                         'kbs': 'avg',
     #                         'alias': 'alias/ip'}))
 
     #     # Sort stations according to creation time
@@ -247,7 +247,7 @@ class ratemon():
         self.captured = 0
         for station in self.stations.values():
             station['frames'] = 0
-            station['average'] = 0.0
+            station['kbs'] = 0.0
             station['received'] = 0.0
 
     def reset_nodes(self):
@@ -288,7 +288,7 @@ class ratemon():
             station['created'] = now
             station['frames'] = 0
             station['received'] = 0.0
-            station['average'] = 0.0
+            station['kbs'] = 0.0
             station['fps'] = 0
             station['start'] = now
 
@@ -309,9 +309,9 @@ class ratemon():
         if (now - station['start'] >= 1):
             received = station['received']
             fps = station['fps']
-            ## Calculated average in Kb
-            #station['average'] = (received / fps) / 1000.0
-            station['average'] = received / 1000.0
+            ## Calculated kbs in Kb
+            #station['kbs'] = (received / fps) / 1000.0
+            station['kbs'] = received / 1000.0
             ## Reset data counters
             station['start'] = now
             station['received'] = 0.0
