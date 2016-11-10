@@ -5,20 +5,6 @@ All Rights Reserved
 
 Distributed under the "BSD License". See the accompanying LICENSE.rst file.
 
-Dump 802.11 power-save status
-
-Add a monitor interface and specify channel before use:
-  iw phy <phy> interface add mon0 type monitor
-  iw mon0 set channel <channel> HT20
-
-Replace <phy> and <channel> with the correct values.
-
-Alternative setup:
-  ifconfig <wlan device> down
-  iwconfig <wlan device> mode monitor
-  ifconfig <wlan device> up
-  iw <wlan device> set channel <channel> HT20
-
   run ratemon.py with <wlan device> as interface
 """
 
@@ -119,8 +105,6 @@ class ratemon():
         self.update_ip_list()
 
         nodes = len(self.stations)
-
-        #total_kps = self.total_kps(stations)
 
         total_kbs = 0.0
 
@@ -245,7 +229,7 @@ class ratemon():
             received = station['received']
             fps = station['fps']
 
-            ## Calculate KB/S
+            ## Calculate kB/S
             station['kbs'] = received / 1000.0
             ## Reset data counters
             station['start'] = now
