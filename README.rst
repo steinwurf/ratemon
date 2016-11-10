@@ -79,6 +79,21 @@ You may need to install the non-free ralink driver::
 
     sudo aptitude update && aptitude install firmware-ralink
 
+If you get the following error::
+
+  SIOCSIFFLAGS: operation not possible due to RFkill
+
+You need to unblock the wifi, run::
+
+  sudo rfkill list
+
+To check if the wifi is actually blocked and then run::
+
+  sudo rfkill unblock wifi
+
+Then run `sudo rfkill list` to check that the wifi is acutally unblocked now.
+This is take (from http://askubuntu.com/a/62167):
+
 Now we need to set the channel to monitor::
 
     sudo iw dev mon0 set channel 36

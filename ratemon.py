@@ -125,12 +125,11 @@ class ratemon():
         top = '[{0}][frames: {1}][nodes: {2}][date: {3}]\n\n'
         self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
         header = ' {mac:18s} {ps:3s} {frames:7s}' \
-                 '{average:>7s} {alias}\n\n'
+                 '{kbs:>7s} {alias}\n\n'
         self.screen.addstr(header.format(**
                            {'mac': 'mac',
-                            'ps': 'ps',
                             'frames': 'frames',
-                            'average': 'avg',
+                            'kbs': 'kb/s',
                             'alias': 'alias/ip'}))
 
         # Sort stations according to creation time
@@ -155,8 +154,8 @@ class ratemon():
             if self.only_alias and not station['alias']:
                 continue
 
-            fmt = ' {mac:18s} {ps:<3d} {frames:<7d}'\
-                  '{average:>5.3f} {alias} {ip}\n'
+            fmt = ' {mac:18s} {frames:<7d}'\
+                  '{kbs:>5.3f} {alias} {ip}\n'
             text = fmt.format(**station)
             if station['stale']:
                 color = curses.color_pair(3) | curses.A_BOLD
@@ -172,71 +171,6 @@ class ratemon():
 
         self.screen.refresh()
 
-
-    # def update_screen(self):
-    #     """Update screen."""
-    #     self.screen.clear()
-
-    #     # Update stale nodes
-    #     self.update_timeout()
-
-    #     # Update MAC to IP table
-    #     self.update_ip_list()
-
-    #     nodes = len(self.stations)
-
-    #     now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
-
-    #     top = '[{0}][frames: {1}][nodes: {2}][date: {3}]\n\n'
-    #     self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
-
-    #     header = ' {mac:18s} {ps:3s} {frames:7s} ' \
-    #              '{average:4s} {alias}\n\n'
-    #     self.screen.addstr(header.format(**
-    #                        {'mac': 'mac',
-    #                         'ps': 'ps',
-    #                         'frames': 'frames',
-    #                         'average': 'avg',
-    #                         'alias': 'alias/ip'}))
-
-    #     # Sort stations according to creation time
-    #     sorted_stations = sorted(
-    #         self.stations.values(),
-    #         key=lambda s: int(s['created'] * 1000))
-
-    #     # Get window dimensions
-    #     maxy, maxx = self.screen.getmaxyx()
-
-    #     shown = 0
-    #     for station in sorted_stations:
-    #         # Break if we cant fit more clients on the screen
-    #         y, x = self.screen.getyx()
-    #         if y >= maxy - 3:
-    #             overflow = nodes - shown
-    #             self.screen.addstr(" {0} nodes not shown...".format(overflow))
-    #             break
-    #         shown += 1
-
-    #         # Continue if only showing aliased nodes
-    #         if self.only_alias and not station['alias']:
-    #             continue
-
-    #         fmt = ' {mac:18s} {ps:<3d} {frames:<7d} '\
-    #               '{avg:>4.3f} {alias}\n'
-
-    #         text = fmt.format(**station)
-    #         if station['stale']:
-    #             color = curses.color_pair(3) | curses.A_BOLD
-    #         elif station['ps']:
-    #             color = curses.color_pair(1)
-    #         else:
-    #             color = curses.color_pair(2)
-    #         self.screen.addstr(text, color)
-    #     # Show help text
-    #     footer = "q: quit | r: reset counters | R: reset nodes"
-    #     self.screen.addstr(maxy - 1, 1, footer)
-
-    #     self.screen.refresh()
 
     def add_alias(self, host, name):
         """Add alias."""
