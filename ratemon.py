@@ -124,13 +124,13 @@ class ratemon():
 
         total_kbs = 0.0
 
-        for station in self.stations:
+        for mac,station in self.stations.iteritems():
             if 'kbs' in station:
                 total_kbs += station['kbs']
 
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
-        top = '[{0}][frames: {1}][nodes: {2}] [total kb/s: {3}] [date: {3}]\n\n'
+        top = '[{0}][frames: {1}][nodes: {2}] [total kb/s: {3}] [date: {4}]\n\n'
         self.screen.addstr(top.format(self.prog, self.captured, nodes, \
                                       total_kbs, now))
         header = ' {mac:18s} {frames:7s}' \
