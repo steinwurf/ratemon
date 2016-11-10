@@ -157,10 +157,7 @@ class ratemon():
             fmt = ' {mac:18s} {frames:<7d}'\
                   '{kbs:>5.3f} {alias} {ip}\n'
             text = fmt.format(**station)
-            if station['stale']:
-                color = curses.color_pair(3) | curses.A_BOLD
-            else:
-                color = curses.color_pair(2)
+            color = curses.color_pair(2)
             self.screen.addstr(text, color)
 
         # Show help text
