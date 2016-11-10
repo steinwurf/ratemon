@@ -1,21 +1,11 @@
-#!/usr/bin/env python2
-
+#!/usr/bin/env python
 """
-Dump 802.11 power-save status
+Copyright (c) Steinwurf ApS 2016.
+All Rights Reserved
 
-Add a monitor interface and specify channel before use:
-  iw phy <phy> interface add mon0 type monitor
-  iw mon0 set channel <channel> HT20
+Distributed under the "BSD License". See the accompanying LICENSE.rst file.
 
-Replace <phy> and <channel> with the correct values.
-
-Alternative setup:
-  ifconfig <wlan device> down
-  iwconfig <wlan device> mode monitor
-  ifconfig <wlan device> up
-  iw <wlan device> set channel <channel> HT20
-
-  run wpsmon.py with <wlan device> as interface
+  run ratemon.py with <wlan device> as interface
 """
 
 from __future__ import print_function
@@ -116,19 +106,23 @@ class ratemon():
 
         nodes = len(self.stations)
 
+        total_kbs = 0.0
+
+        for mac,station in self.stations.iteritems():
+            if 'kbs' in station:
+                total_kbs += station['kbs']
+
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
-        top = '[{0}][frames: {1}][nodes: {2}][date: {3}]\n\n'
-        self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
-        header = ' {mac:18s} {ps:3s} {frames:7s} {slept:5s} ' \
-                 '{tout:>7s} {tmax:>7s}  {alias}\n\n'
+        top = '[{0}][frames: {1}][nodes: {2}] [total kB/s: {3}] [date: {4}]\n\n'
+        self.screen.addstr(top.format(self.prog, self.captured, nodes, \
+                                      total_kbs, now))
+        header = ' {mac:18s} {frames:7s}' \
+                 '{kbs:>7s} {alias}\n\n'
         self.screen.addstr(header.format(**
                            {'mac': 'mac',
-                            'ps': 'ps',
                             'frames': 'frames',
-                            'slept': 'slept',
-                            'tout': 'tout',
-                            'tmax': 'tmax',
+                            'kbs': 'kB/s',
                             'alias': 'alias/ip'}))
 
         # Sort stations according to creation time
@@ -153,13 +147,11 @@ class ratemon():
             if self.only_alias and not station['alias']:
                 continue
 
-            fmt = ' {mac:18s} {ps:<3d} {frames:<7d} {slept:<5d}'\
-                  '{tout:>7.1f} {tmax:>7.1f} {alias} {ip}\n'
+            fmt = ' {mac:18s} {frames:<7d}'\
+                  '{kbs:>5.3f} {alias} {ip}\n'
             text = fmt.format(**station)
             if station['stale']:
                 color = curses.color_pair(3) | curses.A_BOLD
-            elif station['ps']:
-                color = curses.color_pair(1)
             else:
                 color = curses.color_pair(2)
             self.screen.addstr(text, color)
@@ -179,9 +171,8 @@ class ratemon():
         self.captured = 0
         for station in self.stations.values():
             station['frames'] = 0
-            station['slept'] = 0
-            station['tout'] = 0
-            station['tmax'] = 0
+            station['kbs'] = 0.0
+            station['received'] = 0.0
 
     def reset_nodes(self):
         """Reset nodes."""
@@ -202,7 +193,6 @@ class ratemon():
         if wlan.type is not dpkt.ieee80211.DATA_TYPE:
             return
 
-        ps = wlan.pwr_mgt
         mac = mac_string(wlan.data_frame.src).lower()
 
         # Lookup station
@@ -220,53 +210,31 @@ class ratemon():
             station['ip'] = ''
             station['created'] = now
             station['frames'] = 0
-            station['tout'] = 0
-            station['tmax'] = 0
-            station['slept'] = 0
-            station['data_size_received'] = 0
-            station['data_size_average'] = 0
-            station['frames_pr_second'] = 0
-            station['second'] = now
-
-        # Detect if a station is going to sleep
-        old_ps = station.get('ps', 0)
-        station['ps'] = ps
-        going_to_ps = ps and not old_ps
-
-        # Count number of sleeps
-        if going_to_ps:
-            station['slept'] += 1
-
-        # Calculate timeout if going to PS
-        if 'last' in station and going_to_ps:
-            diff_ms = (now - station['last']) * 1000
-            station['tout'] = diff_ms
-
-            if diff_ms > station['tmax']:
-                station['tmax'] = diff_ms
+            station['received'] = 0.0
+            station['kbs'] = 0.0
+            station['fps'] = 0
+            station['start'] = now
 
         # Log last updated time
         station['last'] = now
 
         # Increment packet frame count
         station['frames'] += 1
-        station['frames_pr_second'] += 1
+        station['fps'] += 1
 
-        # update total data received
-        # Based on: http://stackoverflow.com/a/3742428/936269
-        station['data_size_received'] += header.getlen()
+        # Registre amount of data received
+        station['received'] += header.getlen()
 
-        # If a second has passed calculated average
-        if (now - station['second']) >= 1:
-            data_size = station['data_size_received']
-            frames_pr_second = station['frames_pr_second']
+        if (now - station['start'] >= 1):
+            received = station['received']
+            fps = station['fps']
 
-            station['data_size_average'] = data_size / frames_pr_second
-
-            # reset
-            station['second'] = now
-            station['data_size_received'] = 0
-            station['frames_pr_second'] = 0
+            ## Calculate kB/S
+            station['kbs'] = received / 1000.0
+            ## Reset data counters
+            station['start'] = now
+            station['received'] = 0.0
+            station['fps'] = 0
 
         # Try to set IP if empty
         if station['ip'] == '':
@@ -276,7 +244,6 @@ class ratemon():
 
         # Station is not stale
         station['stale'] = False
-
 
 def parse_alias_pair(alias):
     """Parse alias mac, name pair."""

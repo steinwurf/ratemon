@@ -79,6 +79,21 @@ You may need to install the non-free ralink driver::
 
     sudo aptitude update && aptitude install firmware-ralink
 
+If you get the following error::
+
+  SIOCSIFFLAGS: operation not possible due to RFkill
+
+You need to unblock the wifi, run::
+
+  sudo rfkill list
+
+To check if the wifi is actually blocked and then run::
+
+  sudo rfkill unblock wifi
+
+Then run `sudo rfkill list` to check that the wifi is acutally unblocked now.
+This is take (from http://askubuntu.com/a/62167):
+
 Now we need to set the channel to monitor::
 
     sudo iw dev mon0 set channel 36
@@ -97,6 +112,12 @@ and a few python packages, let's make a virtual env::
     virtualenv wpsmon
     source wpsmon/bin/activate
     pip install -r ./requirements.txt
+
+
+ If you use version 6+ of ncurses you will need to make a soft link from
+ version N to  version 5. Example for ncurses6::
+
+    ln -s /usr/lib/libncursesw.so.6  /usr/lib/libncursesw.so.5
 
 Run
 ---
