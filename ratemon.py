@@ -125,12 +125,12 @@ class ratemon():
         top = '[{0}][frames: {1}][nodes: {2}][date: {3}]\n\n'
         self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
         header = ' {mac:18s} {ps:3s} {frames:7s}' \
-                 '{average:>7s} {alias}\n\n'
+                 '{kbs:>7s} {alias}\n\n'
         self.screen.addstr(header.format(**
                            {'mac': 'mac',
                             'ps': 'ps',
                             'frames': 'frames',
-                            'average': 'avg',
+                            'kbs': 'kb/s',
                             'alias': 'alias/ip'}))
 
         # Sort stations according to creation time
@@ -156,7 +156,7 @@ class ratemon():
                 continue
 
             fmt = ' {mac:18s} {ps:<3d} {frames:<7d}'\
-                  '{average:>5.3f} {alias} {ip}\n'
+                  '{kb:>5.3f} {alias} {ip}\n'
             text = fmt.format(**station)
             if station['stale']:
                 color = curses.color_pair(3) | curses.A_BOLD
