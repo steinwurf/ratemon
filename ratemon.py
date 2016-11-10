@@ -124,9 +124,8 @@ class ratemon():
 
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
-        top = '[{0}][frames: {1}][nodes: {2}] [total kbs: {3}][date: {4}]\n\n'
-        self.screen.addstr(top.format(self.prog, self.captured, nodes, \
-                                      total_kbs, now))
+        top = '[{0}][frames: {1}][nodes: {2}] [date: {3}]\n\n'
+        self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
         header = ' {mac:18s} {frames:7s}' \
                  '{kbs:>7s} {alias}\n\n'
         self.screen.addstr(header.format(**
