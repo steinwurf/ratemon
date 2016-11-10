@@ -124,9 +124,9 @@ class ratemon():
 
         total_kbs = 0.0
 
-         for station in self.stations:
-             if 'kbs' in station:
-                 total_kbs += station['kbs']
+        for station in self.stations:
+            if 'kbs' in station:
+                total_kbs += station['kbs']
 
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
