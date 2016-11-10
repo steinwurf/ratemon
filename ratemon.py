@@ -130,7 +130,7 @@ class ratemon():
 
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
-        top = '[{0}][frames: {1}][nodes: {2}] [total kb/s: {3}] [date: {4}]\n\n'
+        top = '[{0}][frames: {1}][nodes: {2}] [total kB/s: {3}] [date: {4}]\n\n'
         self.screen.addstr(top.format(self.prog, self.captured, nodes, \
                                       total_kbs, now))
         header = ' {mac:18s} {frames:7s}' \
@@ -138,7 +138,7 @@ class ratemon():
         self.screen.addstr(header.format(**
                            {'mac': 'mac',
                             'frames': 'frames',
-                            'kbs': 'kb/s',
+                            'kbs': 'kB/s',
                             'alias': 'alias/ip'}))
 
         # Sort stations according to creation time
