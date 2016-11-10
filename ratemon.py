@@ -120,7 +120,7 @@ class ratemon():
 
         nodes = len(self.stations)
 
-        total_kps = self.total_kps(stations)
+        #total_kps = self.total_kps(stations)
 
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
