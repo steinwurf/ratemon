@@ -156,7 +156,7 @@ class ratemon():
                 continue
 
             fmt = ' {mac:18s} {ps:<3d} {frames:<7d}'\
-                  '{kb:>5.3f} {alias} {ip}\n'
+                  '{kbs:>5.3f} {alias} {ip}\n'
             text = fmt.format(**station)
             if station['stale']:
                 color = curses.color_pair(3) | curses.A_BOLD
