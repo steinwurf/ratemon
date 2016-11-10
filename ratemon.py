@@ -120,10 +120,13 @@ class ratemon():
 
         nodes = len(self.stations)
 
+        total_kps = self.total_kps(stations):
+
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
-        top = '[{0}][frames: {1}][nodes: {2}][date: {3}]\n\n'
-        self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
+        top = '[{0}][frames: {1}][nodes: {2}] [total kbs: {3}][date: {4}]\n\n'
+        self.screen.addstr(top.format(self.prog, self.captured, nodes, \
+                                      total_kbs, now))
         header = ' {mac:18s} {frames:7s}' \
                  '{kbs:>7s} {alias}\n\n'
         self.screen.addstr(header.format(**
@@ -200,7 +203,6 @@ class ratemon():
         if wlan.type is not dpkt.ieee80211.DATA_TYPE:
             return
 
-        ps = wlan.pwr_mgt
         mac = mac_string(wlan.data_frame.src).lower()
 
         # Lookup station
@@ -222,10 +224,6 @@ class ratemon():
             station['kbs'] = 0.0
             station['fps'] = 0
             station['start'] = now
-
-        # Detect if a station is going to sleep
-        old_ps = station.get('ps', 0)
-        station['ps'] = ps
 
         # Log last updated time
         station['last'] = now
@@ -258,6 +256,12 @@ class ratemon():
 
         # Station is not stale
         station['stale'] = False
+
+    def total_kps(self):
+        result = 0.0
+        for station in self.stations:
+            result += station['kbs']
+        return result
 
 
 def parse_alias_pair(alias):
