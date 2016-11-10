@@ -122,10 +122,16 @@ class ratemon():
 
         #total_kps = self.total_kps(stations)
 
+        total_kps = 0.0
+
+        for station in self.stations:
+            total_kps += station['kbs']
+
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
-        top = '[{0}][frames: {1}][nodes: {2}] [date: {3}]\n\n'
-        self.screen.addstr(top.format(self.prog, self.captured, nodes, now))
+        top = '[{0}][frames: {1}][nodes: {2}] [total kp/s: {3}] [date: {4}]\n\n'
+        self.screen.addstr(top.format(self.prog, self.captured, nodes, \
+                                      total_kps, now))
         header = ' {mac:18s} {frames:7s}' \
                  '{kbs:>7s} {alias}\n\n'
         self.screen.addstr(header.format(**
@@ -255,12 +261,6 @@ class ratemon():
 
         # Station is not stale
         station['stale'] = False
-
-    def total_kps(self):
-        result = 0.0
-        for station in self.stations:
-            result += station['kbs']
-        return result
 
 
 def parse_alias_pair(alias):
