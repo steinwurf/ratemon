@@ -159,8 +159,6 @@ class ratemon():
             text = fmt.format(**station)
             if station['stale']:
                 color = curses.color_pair(3) | curses.A_BOLD
-            elif station['ps']:
-                color = curses.color_pair(1)
             else:
                 color = curses.color_pair(2)
             self.screen.addstr(text, color)
