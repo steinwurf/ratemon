@@ -244,15 +244,13 @@ class ratemon():
         if (now - station['start'] >= 1):
             received = station['received']
             fps = station['fps']
-            ## Calculated kbs in Kb
-            #station['kbs'] = (received / fps) / 1000.0
+
+            ## Calculate KB/S
             station['kbs'] = received / 1000.0
             ## Reset data counters
             station['start'] = now
             station['received'] = 0.0
             station['fps'] = 0
-
-
 
         # Try to set IP if empty
         if station['ip'] == '':
@@ -262,7 +260,6 @@ class ratemon():
 
         # Station is not stale
         station['stale'] = False
-
 
 def parse_alias_pair(alias):
     """Parse alias mac, name pair."""
