@@ -122,16 +122,16 @@ class ratemon():
 
         #total_kps = self.total_kps(stations)
 
-        total_kps = 0.0
+        total_kbs = 0.0
 
-        for station in self.stations:
-            total_kps += station['kbs']
+        # for station in self.stations:
+        #     total_kbs += station['kbs']
 
         now = datetime.datetime.now().strftime('%Y-%m-%d %H:%M')
 
-        top = '[{0}][frames: {1}][nodes: {2}] [total kp/s: {3}] [date: {4}]\n\n'
+        top = '[{0}][frames: {1}][nodes: {2}] [total kb/s: {3}] [date: {3}]\n\n'
         self.screen.addstr(top.format(self.prog, self.captured, nodes, \
-                                      total_kps, now))
+                                      now))
         header = ' {mac:18s} {frames:7s}' \
                  '{kbs:>7s} {alias}\n\n'
         self.screen.addstr(header.format(**
