@@ -185,10 +185,7 @@ class ratemon():
         # todo let's output the errors somewhere.
         tap = dpkt.radiotap.Radiotap(packet)
         tap_len = socket.ntohs(tap.length)
-        rate = dpkt.raidotap(packet).rate_present()
-        with open('log.log', 'a') as f:
-            f.write(rate)
-            f.write('')
+        rate = tap.rate_present()
 
         # Parse IEEE80211 header
         wlan = dpkt.ieee80211.IEEE80211(packet[tap_len:])
