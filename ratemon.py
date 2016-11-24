@@ -185,7 +185,7 @@ class ratemon():
         # todo let's output the errors somewhere.
         tap = dpkt.radiotap.Radiotap(packet)
         tap_len = socket.ntohs(tap.length)
-        rate = tap.rate_present()
+        rate = dpkt.raidotap(packet).rate_present()
         with open('log.log', 'a') as f:
             f.write(rate)
             f.write('')
