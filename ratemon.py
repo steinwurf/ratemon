@@ -62,7 +62,7 @@ class ratemon():
         self.dead_time = dead_time
 
     def set_only_alias(self, only_alias):
-        """Set set only alias."""
+        """Set only alias."""
         self.only_alias = only_alias
 
     def update_ip_list(self):
